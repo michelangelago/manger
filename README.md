@@ -29,3 +29,16 @@ composer bot
 
 The bot uses long polling, so no web server or public URL is required.
 Send `/start` or `/hello Maria` to your bot in Telegram. Stop it with Ctrl+C.
+
+## Database
+
+Requires the PHP PDO and `pdo_sqlite` extensions. Load the SQLite connection
+from application code (for example, from `app/bot/bot.php`):
+
+```php
+$pdo = require dirname(__DIR__) . '/database/connection.php';
+```
+
+The connection creates `storage/database.sqlite` automatically. Database files
+are ignored by Git. PDO throws exceptions on database errors and returns rows
+as associative arrays. Foreign key enforcement is enabled.
