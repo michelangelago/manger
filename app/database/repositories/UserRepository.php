@@ -11,7 +11,7 @@ require_once __DIR__ . '/Repository.php';
 final class UserRepository extends Repository
 {
     protected const TABLE = 'users';
-    protected const COLUMNS = ['telegram_id', 'name', 'username'];
+    protected const COLUMNS = ['telegram_id', 'name'];
 
     public function save(int $telegramId, string $name): void
     {

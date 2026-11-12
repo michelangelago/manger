@@ -24,11 +24,51 @@ Set `TELEGRAM_BOT_TOKEN` in `.env` to the token provided by Telegram's BotFather
 Start the bot in a terminal:
 
 ```bash
+composer migrate
 composer bot
 ```
 
 The bot uses long polling, so no web server or public URL is required.
 Send `/start` or `/hello Maria` to your bot in Telegram. Stop it with Ctrl+C.
+
+`/start` saves the sender's Telegram ID and full name (first name and optional
+last name) in `users` before confirming registration. Sending it again updates
+the name without creating a duplicate user. `/hello` only sends a greeting.
+
+Bot modules:
+
+- `app/bot/bot.php` starts polling.
+- `app/bot/bootstrap.php` loads configuration, connects the database, and wires dependencies.
+- `app/bot/commands.php` maps Telegram commands to their handlers.
+- `app/bot/commands/StartCommand.php` registers users and displays their saved information.
+- `app/bot/commands/HelloCommand.php` sends personalized greetings.
+- `app/bot/commands/HelpCommand.php` lists commands through `/help`.
+
+To add a command, create a handler in `app/bot/commands/` and register it in
+`app/bot/commands.php`. Database queries stay in the repositories.
+
+### Food group commands
+
+Run `composer migrate` to add the default groups: fruits, vegetables, grains,
+protein, dairy, and fats. Existing groups with matching names are preserved.
+
+```text
+/fgroup Index
+/fgroup Create "Whole grains"
+/fgroup Read "Whole grains"
+/fgroup Update "Whole grains" "Cereal grains"
+/fgroup Delete "Cereal grains"
+```
+
+Operations and name lookups ignore letter case. Quote names containing spaces.
+Send `/fgroup` for usage instructions. Duplicate names are rejected by the
+command, and groups referenced by foods cannot be deleted. Food groups are shared
+across bot users. `FoodGroupRepository::findByName()` returns the matching row or
+`null`.
+
+`/fgroup Index` also displays the available operations. `/help` lists all bot
+commands. Run `php tests/food_groups.php` to test the commands using simulated
+Telegram messages and an in-memory database.
 
 ## Database
 
@@ -43,7 +83,7 @@ The connection creates `storage/database.sqlite` automatically. Database files
 are ignored by Git. PDO throws exceptions on database errors and returns rows
 as associative arrays. Foreign key enforcement is enabled.
 
-### Sample users table
+### Users table
 
 Run `composer migrate` to create the `users` table. The runner records completed
 migrations, so running it again skips them. Each migration runs in a transaction.
@@ -69,7 +109,6 @@ The sample uses a placeholder Telegram ID; use the actual sender's ID in bot han
 
 Run `composer migrate` to apply the additional schema:
 
-- `users.username`: optional Telegram username, alongside the existing user fields.
 - `food_groups`: `id`, `name`.
 - `foods`: `id`, `name`, `energy`, `food_group_id`.
 - `daily`: `id`, `name`, `user_id`.
