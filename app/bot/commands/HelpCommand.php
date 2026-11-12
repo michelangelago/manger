@@ -16,6 +16,7 @@ final class HelpCommand
             . "/hello Maria — Get a personalized greeting.\n"
             . "/help — Show available commands.\n\n"
             . FoodGroupCommand::USAGE
+            . "\n\n" . FoodCommand::USAGE
             . "\n\nQuote names containing spaces."
         );
     }

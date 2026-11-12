@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Dotenv\Dotenv;
 use App\Database\Repositories\UserRepository;
 use App\Database\Repositories\FoodGroupRepository;
+use App\Database\Repositories\FoodRepository;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Configuration;
 
@@ -31,6 +32,6 @@ $pdo = require $projectRoot . '/app/database/connection.php';
 $users = new UserRepository($pdo);
 
 $registerCommands = require __DIR__ . '/commands.php';
-$registerCommands($bot, $users, new FoodGroupRepository($pdo));
+$registerCommands($bot, $users, new FoodGroupRepository($pdo), new FoodRepository($pdo));
 
 return $bot;

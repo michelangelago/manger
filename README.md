@@ -70,6 +70,23 @@ across bot users. `FoodGroupRepository::findByName()` returns the matching row o
 commands. Run `php tests/food_groups.php` to test the commands using simulated
 Telegram messages and an in-memory database.
 
+### Food registration
+
+```text
+/food "Maçã verde" 52 fruits
+/food "Arroz integral" 123 "Whole grains"
+```
+
+Use `/food {name} {calories} {group name}` to register a food. Calories map to
+the `energy` column and must be a non-negative integer. Quote names containing
+spaces. The group must already exist; the command resolves its name using
+`FoodGroupRepository::findByName()` and stores its ID in `foods.food_group_id`.
+Group names are matched without regard to letter case. The reply shows the food
+ID, name, calories, and group name. Send `/food` for usage instructions.
+
+`app/bot/commands/FoodCommand.php` handles registration. The same test script
+above covers food registration, group resolution, and invalid input.
+
 ## Database
 
 Requires the PHP PDO and `pdo_sqlite` extensions. Load the SQLite connection

@@ -13,8 +13,9 @@ foreach (glob(dirname(__DIR__) . '/app/database/migrations/*.php') as $file) {
 }
 $users = new App\Database\Repositories\UserRepository($pdo);
 $groups = new App\Database\Repositories\FoodGroupRepository($pdo);
+$foods = new App\Database\Repositories\FoodRepository($pdo);
 $bot = SergiX44\Nutgram\Testing\FakeNutgram::instance();
-$register($bot, $users, $groups);
+$register($bot, $users, $groups, $foods);
 
 function check(bool $condition, string $message): void
 {
@@ -40,7 +41,7 @@ $seed = require dirname(__DIR__) . '/app/database/migrations/003_seed_food_group
 $seed($pdo);
 check(count($groups->index()) === 6, 'Seeding duplicated groups');
 command('/fgroup', 'Food group commands:');
-command('/help', ['/start', '/hello', '/help', '/fgroup Index', '/fgroup Create', '/fgroup Read', '/fgroup Update', '/fgroup Delete']);
+command('/help', ['/start', '/hello', '/help', '/food', '/fgroup Index', '/fgroup Create', '/fgroup Read', '/fgroup Update', '/fgroup Delete']);
 command('/fgroup Index', ['fruits', '/fgroup Create', '/fgroup Read', '/fgroup Update', '/fgroup Delete']);
 command('/fgroup Create "Whole grains"', 'Food group created.');
 command('/fgroup Read "WHOLE GRAINS"', 'Whole grains');
@@ -61,7 +62,20 @@ command('/fgroup Delete fruits', 'used by foods');
 check($groups->findByName('fruits') !== null, 'Referenced group was deleted');
 command('/fgroup Create "Chef\'s choice"', 'Food group created.');
 check($groups->findByName("Chef's choice") !== null, 'Name containing apostrophe not saved');
+command('/food', 'Cadastrar alimento:');
+command('/food "Maçã verde" 52 FRUITS', ['Alimento cadastrado!', 'Maçã verde', 'Calorias: 52', 'Grupo: fruits']);
+$food = $foods->index();
+$food = end($food);
+check($food['name'] === 'Maçã verde' && (int) $food['energy'] === 52 && (int) $food['food_group_id'] === (int) $fruit['id'], 'Food saved with incorrect data or foreign key');
+command('/food "Chef\'s special" 0 "Chef\'s choice"', ['Alimento cadastrado!', 'Calorias: 0', "Grupo: Chef's choice"]);
+$count = count($foods->index());
+command('/food Banana 89 missing', 'Grupo não encontrado:');
+command('/food Banana 89 ' . $fruit['id'], 'Grupo não encontrado:');
+foreach (['/food Banana -1 fruits', '/food Banana 2.5 fruits', '/food Banana abc fruits', '/food "" 52 fruits', '/food Banana 52 ""', '/food Banana 52', '/food Banana 52 fruits extra', '/food "broken 52 fruits', '/food Banana 99999999999999999999999999 fruits'] as $invalid) {
+    command($invalid, 'Cadastrar alimento:');
+}
+check(count($foods->index()) === $count, 'Invalid food command inserted rows');
 $pdo->exec('DELETE FROM foods');
 $pdo->exec('DELETE FROM food_groups');
 command('/fgroup Index', ['No food groups registered.', '/fgroup Create', '/fgroup Read', '/fgroup Update', '/fgroup Delete']);
-echo "Food group command tests passed.\n";
+echo "Food group and food command tests passed.\n";
