@@ -6,6 +6,7 @@ namespace App\Bot\Commands;
 
 use App\Database\Repositories\FoodGroupRepository;
 use App\Database\Repositories\FoodRepository;
+use PDOException;
 use SergiX44\Nutgram\Nutgram;
 
 require_once dirname(__DIR__, 2) . '/database/repositories/FoodRepository.php';
@@ -13,11 +14,14 @@ require_once dirname(__DIR__, 2) . '/database/repositories/FoodGroupRepository.p
 
 final class FoodCommand
 {
-    public const USAGE = "Cadastrar alimento:\n"
-        . "/food \"Nome\" calorias \"Nome do grupo\"\n"
-        . "Exemplo: /food \"Maçã\" 52 fruits\n"
-        . "Informe as calorias como um número inteiro maior ou igual a zero.\n"
-        . "Use aspas para nomes com espaços. Veja os grupos com /fgroup Index.";
+    public const USAGE = "Food commands:\n"
+        . "/food Index\n"
+        . "/food Create \"name\" calories \"group name\"\n"
+        . "/food Read \"existing name\"\n"
+        . "/food Update \"existing name\" \"new name\" calories \"group name\"\n"
+        . "/food Delete \"existing name\"\n"
+        . "Enter calories per 100 grams as a non-negative integer.\n"
+        . "Quote names containing spaces. View groups with /fgroup Index.";
 
     public function __construct(private FoodRepository $foods, private FoodGroupRepository $groups)
     {
@@ -25,39 +29,96 @@ final class FoodCommand
 
     public function __invoke(Nutgram $bot, string $arguments = ''): void
     {
-        if (!preg_match('/^\s*("[^"]*"|[^\s"]+)\s+([0-9]+)\s+("[^"]*"|[^\s"]+)\s*$/', $arguments, $matches)) {
+        if (!preg_match('/^\s*(Index|Create|Read|Update|Delete)(?:\s+(?:"[^"]*"|[^\s"]+))*\s*$/i', $arguments)) {
             $bot->sendMessage(self::USAGE);
             return;
         }
 
-        $name = trim(trim($matches[1], '"'));
-        $groupName = trim(trim($matches[3], '"'));
-        $energy = filter_var(ltrim($matches[2], '0') ?: '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        preg_match_all('/"[^"]*"|[^\s"]+/', $arguments, $matches);
+        $tokens = array_map(static fn (string $token): string => trim(trim($token, '"')), $matches[0]);
+        $operation = strtolower(array_shift($tokens));
+        $expected = ['index' => 0, 'create' => 3, 'read' => 1, 'update' => 4, 'delete' => 1];
 
-        if ($name === '' || $groupName === '' || $energy === false) {
+        if (count($tokens) !== $expected[$operation] || in_array('', $tokens, true)) {
             $bot->sendMessage(self::USAGE);
+            return;
+        }
+
+        if ($operation === 'index') {
+            $foods = $this->foods->index();
+            $listing = $foods === [] ? 'No foods registered.' : "Foods:\n" . implode("\n\n", array_map(
+                fn (array $food): string => $this->describe($food),
+                $foods
+            ));
+            $bot->sendMessage($listing . "\n\n" . self::USAGE);
+            return;
+        }
+
+        $food = $this->foods->findByName($tokens[0]);
+        if ($operation !== 'create' && $food === null) {
+            $bot->sendMessage("Food not found: {$tokens[0]}");
+            return;
+        }
+
+        if ($operation === 'read') {
+            $bot->sendMessage($this->describe($food));
+            return;
+        }
+
+        if ($operation === 'delete') {
+            try {
+                $this->foods->delete((int) $food['id']);
+            } catch (PDOException $exception) {
+                if (($exception->errorInfo[1] ?? null) !== 19 || !str_contains($exception->getMessage(), 'FOREIGN KEY constraint failed')) {
+                    throw $exception;
+                }
+                $bot->sendMessage('This food is used by daily food entries and cannot be deleted.');
+                return;
+            }
+            $bot->sendMessage("Food deleted: {$food['name']}");
+            return;
+        }
+
+        $values = $operation === 'update' ? array_slice($tokens, 1) : $tokens;
+        [$name, $calories, $groupName] = $values;
+        $energy = preg_match('/^[0-9]+$/', $calories)
+            ? filter_var(ltrim($calories, '0') ?: '0', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])
+            : false;
+        if ($energy === false) {
+            $bot->sendMessage(self::USAGE);
+            return;
+        }
+
+        $existing = $this->foods->findByName($name);
+        if ($existing !== null && ($operation === 'create' || $existing['id'] !== $food['id'])) {
+            $bot->sendMessage('A food with that name already exists.');
             return;
         }
 
         $group = $this->groups->findByName($groupName);
-
         if ($group === null) {
-            $bot->sendMessage("Grupo não encontrado: {$groupName}\nConsulte os grupos com /fgroup Index.");
+            $bot->sendMessage("Group not found: {$groupName}\nView groups with /fgroup Index.");
             return;
         }
 
-        $id = $this->foods->create([
-            'name' => $name,
-            'energy' => $energy,
-            'food_group_id' => (int) $group['id'],
-        ]);
+        $data = ['name' => $name, 'energy' => $energy, 'food_group_id' => (int) $group['id']];
+        if ($operation === 'create') {
+            $id = $this->foods->create($data);
+            $message = 'Food created!';
+        } else {
+            $id = (int) $food['id'];
+            $this->foods->update($id, $data);
+            $message = 'Food updated!';
+        }
+        $bot->sendMessage($message . "\n" . $this->describe(['id' => $id, ...$data]));
+    }
 
-        $bot->sendMessage(
-            "Alimento cadastrado!\n"
-            . "ID: {$id}\n"
-            . "Nome: {$name}\n"
-            . "Calorias: {$energy}\n"
-            . "Grupo: {$group['name']}"
-        );
+    private function describe(array $food): string
+    {
+        $group = $this->groups->read((int) $food['food_group_id']);
+        return "ID: {$food['id']}\n"
+            . "Name: {$food['name']}\n"
+            . "Calories per 100 g: {$food['energy']}\n"
+            . "Group: {$group['name']}";
     }
 }

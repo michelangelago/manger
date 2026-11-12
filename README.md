@@ -2,6 +2,31 @@
 
 Requires PHP 8.2 or newer and Composer.
 
+## Tests
+
+Run all tests from the terminal:
+
+```bash
+composer test
+```
+
+Results are grouped by file, with `[OK]` or `[FAIL]` for each named case,
+failure details, and a final summary of totals and duration. The command exits
+with a non-zero status when any test fails, so it can also be used in CI.
+
+- `tests/Bot/`: command integration tests with simulated Telegram updates.
+- `tests/Database/`: migration, seed, and repository tests.
+- `tests/Support/TestContext.php`: shared setup and assertions.
+- `tests/bootstrap.php`: test dependencies.
+- `tests/run.php`: discovers and runs `*Test.php` files recursively.
+
+Every case gets a fresh in-memory SQLite database and fake Telegram client;
+tests do not access the application database or send real Telegram messages.
+To add tests, return an array of named callables from a `*Test.php` file. Each
+callable receives a `Tests\Support\TestContext` instance.
+
+## Running the application
+
 ```bash
 composer install
 composer start
@@ -67,25 +92,32 @@ across bot users. `FoodGroupRepository::findByName()` returns the matching row o
 `null`.
 
 `/fgroup Index` also displays the available operations. `/help` lists all bot
-commands. Run `php tests/food_groups.php` to test the commands using simulated
+commands. Run `composer test` to test the commands using simulated
 Telegram messages and an in-memory database.
 
-### Food registration
+### Food commands
 
 ```text
-/food "Maçã verde" 52 fruits
-/food "Arroz integral" 123 "Whole grains"
+/food Index
+/food Create "Green apple" 52 fruits
+/food Read "Green apple"
+/food Update "Green apple" "Apple yogurt" 90 dairy
+/food Delete "Apple yogurt"
 ```
 
-Use `/food {name} {calories} {group name}` to register a food. Calories map to
+Use `/food Create {name} {calories} {group name}` to register a food. Calories are
+specified per 100 grams (kcal/100 g) and map to
 the `energy` column and must be a non-negative integer. Quote names containing
 spaces. The group must already exist; the command resolves its name using
 `FoodGroupRepository::findByName()` and stores its ID in `foods.food_group_id`.
-Group names are matched without regard to letter case. The reply shows the food
+Food and group names are matched without regard to letter case. Update takes
+the existing food name, new name, calories, and group name. Duplicate food names
+are rejected, and foods referenced by daily entries cannot be deleted.
+Index lists foods and available operations. The reply shows the food
 ID, name, calories, and group name. Send `/food` for usage instructions.
 
-`app/bot/commands/FoodCommand.php` handles registration. The same test script
-above covers food registration, group resolution, and invalid input.
+`app/bot/commands/FoodCommand.php` handles food operations. The test suite
+above covers CRUD, group resolution, duplicate names, referenced foods, and invalid input.
 
 ## Database
 
