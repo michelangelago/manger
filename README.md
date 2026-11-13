@@ -54,11 +54,11 @@ composer bot
 ```
 
 The bot uses long polling, so no web server or public URL is required.
-Send `/start` or `/hello Maria` to your bot in Telegram. Stop it with Ctrl+C.
+Send `/start` to your bot in Telegram. Stop it with Ctrl+C.
 
 `/start` saves the sender's Telegram ID and full name (first name and optional
 last name) in `users` before confirming registration. Sending it again updates
-the name without creating a duplicate user. `/hello` only sends a greeting.
+the name without creating a duplicate user.
 
 Bot modules:
 
@@ -66,7 +66,6 @@ Bot modules:
 - `app/bot/bootstrap.php` loads configuration, connects the database, and wires dependencies.
 - `app/bot/commands.php` maps Telegram commands to their handlers.
 - `app/bot/commands/StartCommand.php` registers users and displays their saved information.
-- `app/bot/commands/HelloCommand.php` sends personalized greetings.
 - `app/bot/commands/HelpCommand.php` lists commands through `/help`.
 
 To add a command, create a handler in `app/bot/commands/` and register it in

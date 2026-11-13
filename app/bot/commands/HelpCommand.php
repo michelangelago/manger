@@ -13,7 +13,6 @@ final class HelpCommand
         $bot->sendMessage(
             "Available commands:\n\n"
             . "/start — Register or view your saved information.\n"
-            . "/hello Maria — Get a personalized greeting.\n"
             . "/help — Show available commands.\n\n"
             . FoodGroupCommand::USAGE
             . "\n\n" . FoodCommand::USAGE
