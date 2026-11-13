@@ -4,20 +4,22 @@ declare(strict_types=1);
 
 namespace App\Bot\Commands;
 
+use App\Bot\Support\CommandInput;
 use App\Database\Repositories\FoodGroupRepository;
 use PDOException;
 use SergiX44\Nutgram\Nutgram;
 
 require_once dirname(__DIR__, 2) . '/database/repositories/FoodGroupRepository.php';
+require_once dirname(__DIR__) . '/support/CommandInput.php';
 
 final class FoodGroupCommand
 {
     public const USAGE = "Food group commands:\n"
-        . "/fgroup Index\n"
-        . "/fgroup Create \"new name\"\n"
-        . "/fgroup Read \"existing name\"\n"
-        . "/fgroup Update \"existing name\" \"new name\"\n"
-        . "/fgroup Delete \"existing name\"";
+        . "/fgroup -I\n"
+        . "/fgroup -C \"new name\"\n"
+        . "/fgroup -R \"existing name\"\n"
+        . "/fgroup -U \"existing name\" \"new name\"\n"
+        . "/fgroup -D \"existing name\"";
 
     public function __construct(private FoodGroupRepository $groups)
     {
@@ -26,12 +28,12 @@ final class FoodGroupCommand
     public function __invoke(Nutgram $bot, string $arguments = ''): void
     {
         // Names may be a single word or a double-quoted phrase.
-        if (!preg_match('/^\s*(Index|Create|Delete|Read|Update)(?:\s+("[^"]*"|[^\s"]+))?(?:\s+("[^"]*"|[^\s"]+))?\s*$/i', $arguments, $matches)) {
+        if (!preg_match('/^\s*(-[ICRUD])(?:\s+("[^"]*"|[^\s"]+))?(?:\s+("[^"]*"|[^\s"]+))?\s*$/i', $arguments, $matches)) {
             $bot->sendMessage(self::USAGE);
             return;
         }
 
-        $operation = strtolower($matches[1]);
+        $operation = CommandInput::operation($matches[1]);
         $names = array_map(static fn (string $name): string => trim(trim($name, '"')), array_slice($matches, 2));
         $expected = $operation === 'index' ? 0 : ($operation === 'update' ? 2 : 1);
 

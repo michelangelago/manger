@@ -9,6 +9,7 @@
         "vlucas/phpdotenv": "^5.6"
     },
     "scripts": {
+        "test": "@php tests/run.php",
         "migrate": "@php app/database/migrate.php",
         "bot": [
             "Composer\\Config::disableProcessTimeout",
