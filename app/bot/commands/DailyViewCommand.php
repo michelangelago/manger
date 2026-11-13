@@ -8,6 +8,7 @@ use App\Bot\Support\CommandInput;
 use App\Bot\Support\DailySummaryView;
 use App\Database\Repositories\DailyFoodRepository;
 use App\Database\Repositories\UserRepository;
+use App\Database\Repositories\GoalRepository;
 use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -24,7 +25,7 @@ final class DailyViewCommand
 
     private Closure $clock;
 
-    public function __construct(private UserRepository $users, private DailyFoodRepository $entries, private DateTimeZone $timezone, ?Closure $clock = null)
+    public function __construct(private UserRepository $users, private DailyFoodRepository $entries, private GoalRepository $goals, private DateTimeZone $timezone, ?Closure $clock = null)
     {
         $this->clock = static fn (): DateTimeImmutable => ($clock === null ? new DateTimeImmutable('now') : $clock())->setTimezone($timezone);
     }
@@ -54,7 +55,8 @@ final class DailyViewCommand
             $bot->sendMessage('Send /start to register first.');
             return;
         }
-        $day = $date === null ? ($this->clock)()->setTime(0, 0) : new DateTimeImmutable($date, $this->timezone);
+        $now = ($this->clock)();
+        $day = $date === null ? $now->setTime(0, 0) : new DateTimeImmutable($date, $this->timezone);
         [$start, $label] = match ($flag ?? '-D') {
             '-W' => [$day->modify('-' . ((int) $day->format('N') - 1) . ' days'), 'Week'],
             '-M' => [$day->modify('first day of this month'), 'Month'],
@@ -69,6 +71,8 @@ final class DailyViewCommand
             $range .= ' to ' . $end->modify('-1 day')->format('Y-m-d');
         }
         $foods = $this->entries->summarizeForUser((int) $user['id'], $start->format('Y-m-d'), $end->format('Y-m-d'));
-        $bot->sendMessage(DailySummaryView::render($label . ' · ' . $range, $foods));
+        $goal = ($flag ?? '-D') === '-D' && $start->format('Y-m-d') === $now->format('Y-m-d')
+            ? $this->goals->findByUserId((int) $user['id']) : null;
+        $bot->sendMessage(DailySummaryView::render($label . ' · ' . $range, $foods, $goal === null ? null : (int) $goal['calories']));
     }
 }

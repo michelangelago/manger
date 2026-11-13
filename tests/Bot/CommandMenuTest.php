@@ -16,7 +16,7 @@ return [
         $t->check(basename($request->getUri()->getPath()) === 'setMyCommands', 'Wrong Telegram method');
         $data = FakeNutgram::getActualData($request);
         $commands = is_string($data['commands']) ? json_decode($data['commands'], true, flags: JSON_THROW_ON_ERROR) : $data['commands'];
-        $t->check(array_column($commands, 'command') === ['start', 'help', 'fgroup', 'food', 'daily', 'dfoods', 'dview'], 'Menu contains missing or obsolete commands');
+        $t->check(array_column($commands, 'command') === ['start', 'help', 'fgroup', 'food', 'daily', 'dfoods', 'dview', 'gview', 'goal', 'eat'], 'Menu contains missing or obsolete commands');
         foreach ($commands as $command) {
             $t->check(strlen($command['description']) >= 1 && strlen($command['description']) <= 256, 'Invalid menu description');
         }

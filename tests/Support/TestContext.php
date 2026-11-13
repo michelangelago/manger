@@ -8,6 +8,7 @@ use App\Database\Repositories\FoodGroupRepository;
 use App\Database\Repositories\FoodRepository;
 use App\Database\Repositories\UserRepository;
 use PDO;
+use App\Database\Repositories\GoalRepository;
 use Closure;
 use DateTimeZone;
 use App\Database\Repositories\DailyRepository;
@@ -23,6 +24,7 @@ final class TestContext
     public FoodRepository $foods;
     public FakeNutgram $bot;
     public DailyRepository $daily;
+    public GoalRepository $goals;
     public DailyFoodRepository $entries;
 
     public function __construct(?Closure $clock = null)
@@ -42,8 +44,9 @@ final class TestContext
         $this->foods = new FoodRepository($this->pdo);
         $this->daily = new DailyRepository($this->pdo);
         $this->entries = new DailyFoodRepository($this->pdo);
+        $this->goals = new GoalRepository($this->pdo);
         $this->bot = FakeNutgram::instance();
-        $register($this->bot, $this->users, $this->groups, $this->foods, $this->daily, $this->entries, new DateTimeZone('America/Recife'), $clock);
+        $register($this->bot, $this->users, $this->groups, $this->foods, $this->daily, $this->entries, $this->goals, new DateTimeZone('America/Recife'), $clock);
     }
 
     public function check(bool $condition, string $message): void
