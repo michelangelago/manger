@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Every command, operation flag, input format, and compact view.">
+  <title>Commands · Manger documentation</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Manger <span class="brand-detail">/ documentation</span></a><span class="header-note">PHP · Telegram · SQLite</span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav aria-label="Documentation"><p class="nav-label">Documentation</p><a href="index.html">Overview</a><a href="setup.html">Getting started</a><a href="commands.html" aria-current="page">Commands</a><a href="database.html">Database</a><a href="development.html">Development</a><a href="tests.html">Testing</a></nav><nav class="local-nav" aria-label="On this page"><p class="nav-label">On this page</p><a href="#operation-flags">Operation flags</a><a href="#registration-and-help">Registration and help</a><a href="#food-groups--fgroup">Food groups — <code>/fgroup</code></a><a href="#food-catalog--food">Food catalog — <code>/food</code></a><a href="#log-consumption--eat-and-dfoods">Log consumption — <code>/eat</code> and <code>/dfoods</code></a><a href="#daily-logs--daily">Daily logs — <code>/daily</code></a><a href="#calorie-summaries--dview">Calorie summaries — <code>/dview</code></a><a href="#browse-foods-by-group--gview">Browse foods by group — <code>/gview</code></a><a href="#daily-calorie-goals--goal">Daily calorie goals — <code>/goal</code></a></nav></aside>
+    <main id="content" tabindex="-1"><header class="page-header"><p class="eyebrow">Manger / Commands</p><h1>Telegram command reference</h1><p class="lead">Every command, operation flag, input format, and compact view.</p></header><article aria-label="Commands guide"><h2 id="operation-flags">Operation flags</h2>
+<p>Flags ignore letter case. Commands support only the operations listed below.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Flag</th><th scope="col">Operation</th></tr></thead><tbody>
+<tr><td><code>-I</code></td><td>Index / list</td></tr>
+<tr><td><code>-C</code></td><td>Create</td></tr>
+<tr><td><code>-R</code></td><td>Read</td></tr>
+<tr><td><code>-U</code></td><td>Update</td></tr>
+<tr><td><code>-D</code></td><td>Delete</td></tr>
+</tbody></table></div>
+<p><code>/dview</code> has its own period flags: its <code>-D</code> means <strong>day</strong>.</p>
+<h2 id="registration-and-help">Registration and help</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Command</th><th scope="col">Result</th></tr></thead><tbody>
+<tr><td><code>/start</code></td><td>Registers your Telegram ID and full name, then shows your saved details.</td></tr>
+<tr><td><code>/help</code></td><td>Lists available commands and their syntax.</td></tr>
+</tbody></table></div>
+<p>Sending <code>/start</code> again welcomes you back and updates your name without creating a duplicate user.</p>
+<h2 id="food-groups--fgroup">Food groups — <code>/fgroup</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/fgroup -I
+/fgroup -C &quot;Whole grains&quot;
+/fgroup -R &quot;Whole grains&quot;
+/fgroup -U &quot;Whole grains&quot; &quot;Cereal grains&quot;
+/fgroup -D &quot;Cereal grains&quot;</code></pre></div>
+<p>Index also shows the available operations. Duplicate names are rejected. Groups referenced by foods cannot be deleted.</p>
+<h2 id="food-catalog--food">Food catalog — <code>/food</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/food -I
+/food -C &quot;Green apple&quot; 52 fruits
+/food -R &quot;Green apple&quot;
+/food -U &quot;Green apple&quot; &quot;Apple yogurt&quot; 90 dairy
+/food -D &quot;Apple yogurt&quot;</code></pre></div>
+<p>Create takes a name, <strong>calories per 100 g</strong>, and an existing group name. Calories must be a non-negative integer. The bot resolves the group&#x27;s name to its database ID internally.</p>
+<p>Update takes the existing food name followed by the new name, calories, and group name. Duplicate food names are rejected. Foods referenced by consumption entries cannot be deleted. Index also shows the available operations.</p>
+<h2 id="log-consumption--eat-and-dfoods">Log consumption — <code>/eat</code> and <code>/dfoods</code></h2>
+<p>Quick logging:</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>/eat &quot;Green apple&quot; 150</code></pre></div>
+<p>This is a shortcut for <code>/dfoods -C &quot;Green apple&quot; 150</code> and uses the same validation and automatic daily log creation.</p>
+<p>Full operations:</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>/dfoods -I
+/dfoods -C &quot;Green apple&quot; 150
+/dfoods -R 1
+/dfoods -U 1 &quot;Green apple&quot; 200
+/dfoods -D 1</code></pre></div>
+<p>Register with <code>/start</code> first. Food names must exist in the catalog, and quantities must be positive whole grams. Read, Update, and Delete use the <strong>entry ID</strong> shown in the reply, because the same food can be logged more than once.</p>
+<h2 id="daily-logs--daily">Daily logs — <code>/daily</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/daily -I
+/daily -R
+/daily -R 2026-11-13</code></pre></div>
+<p>Only Index and Read are available. Read shows the day&#x27;s food entries and total calories. Omit the date to use today in <code>APP_TIMEZONE</code>.</p>
+<h2 id="calorie-summaries--dview">Calorie summaries — <code>/dview</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/dview
+/dview &quot;2026-11-13&quot;
+/dview -D 2026-11-13
+/dview -W
+/dview -M 2026-11-13
+/dview -Y</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th scope="col">Flag</th><th scope="col">Period containing the selected date</th></tr></thead><tbody>
+<tr><td><code>-D</code></td><td>Day; the default.</td></tr>
+<tr><td><code>-W</code></td><td>Calendar week, Monday through Sunday.</td></tr>
+<tr><td><code>-M</code></td><td>Calendar month.</td></tr>
+<tr><td><code>-Y</code></td><td>Calendar year.</td></tr>
+</tbody></table></div>
+<p>The date defaults to today in <code>APP_TIMEZONE</code>. A date and flag can appear in either order.</p>
+<p>Summaries show total calories first, then combined grams and calories per food. Repeated foods are merged. Up to 15 foods are shown, ordered by calories; the footer counts additional foods, which are still included in the total. Empty periods show zero calories.</p>
+<h2 id="browse-foods-by-group--gview">Browse foods by group — <code>/gview</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/gview
+/gview &quot;fruits&quot;</code></pre></div>
+<p>View the entire catalog or one group. Foods appear alphabetically under their group, with a compact name and calorie value beneath a <code>kcal/100 g</code> heading. Empty groups are marked as empty. Large catalogs are split into short messages, and long names are shortened for display.</p>
+<h2 id="daily-calorie-goals--goal">Daily calorie goals — <code>/goal</code></h2>
+<div class="code-block"><span class="code-label">text</span><pre><code>/goal -C 2000
+/goal -R
+/goal -U 1800
+/goal -D</code></pre></div>
+<p>Register with <code>/start</code> first. Each user has one goal, expressed as a positive whole number in <strong>kcal/day</strong>. Create refuses to overwrite an existing goal; use Update to change it.</p>
+<p>Today&#x27;s <code>/dview</code> shows the goal and remaining calories, or calories over the goal. Goals are current settings without historical versions, so this comparison is omitted for past dates and weekly, monthly, and yearly summaries. Deleting a goal does not remove food entries.</p></article><nav class="pager" aria-label="Page navigation"><a href="setup.html">← Getting started</a><a href="database.html">Database →</a></nav><footer>Project documentation · Works offline · No build step</footer></main>
+  </div>
+</body>
+</html>

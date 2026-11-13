@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Requirements, configuration, startup, and terminal commands.">
+  <title>Getting started · Manger documentation</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Manger <span class="brand-detail">/ documentation</span></a><span class="header-note">PHP · Telegram · SQLite</span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav aria-label="Documentation"><p class="nav-label">Documentation</p><a href="index.html">Overview</a><a href="setup.html" aria-current="page">Getting started</a><a href="commands.html">Commands</a><a href="database.html">Database</a><a href="development.html">Development</a><a href="tests.html">Testing</a></nav><nav class="local-nav" aria-label="On this page"><p class="nav-label">On this page</p><a href="#quick-start">Quick start</a><a href="#requirements">Requirements</a><a href="#install-and-run">Install and run</a><a href="#configuration">Configuration</a><a href="#composer-commands">Composer commands</a><a href="#reading-the-html-documentation">Reading the HTML documentation</a><a href="#troubleshooting">Troubleshooting</a></nav></aside>
+    <main id="content" tabindex="-1"><header class="page-header"><p class="eyebrow">Manger / Getting started</p><h1>Install and run Manger</h1><p class="lead">Requirements, configuration, startup, and terminal commands.</p></header><article aria-label="Getting started guide"><h2 id="quick-start">Quick start</h2>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>PHP 8.2 or newer, with PDO and <code>pdo_sqlite</code> enabled.</li>
+<li>Composer.</li>
+<li>A Telegram bot token from BotFather.</li>
+</ul>
+<h3 id="install-and-run">Install and run</h3>
+<div class="code-block"><span class="code-label">bash</span><pre><code>composer install
+cp .env.example .env</code></pre></div>
+<p>Set <code>TELEGRAM_BOT_TOKEN</code> in <code>.env</code>, then run:</p>
+<div class="code-block"><span class="code-label">bash</span><pre><code>composer migrate
+composer bot</code></pre></div>
+<p>In Telegram, send <code>/start</code> to register. Type <code>/</code> to open the command menu or send <code>/help</code> for the full syntax. Stop the bot with <strong>Ctrl+C</strong>.</p>
+<p>Migrations create the database and seed six food groups: <strong>fruits, vegetables, grains, protein, dairy, and fats</strong>.</p>
+<h2 id="configuration">Configuration</h2>
+<p>The bot loads configuration from the root <code>.env</code> file.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Variable</th><th scope="col">Purpose</th><th scope="col">Default</th></tr></thead><tbody>
+<tr><td><code>TELEGRAM_BOT_TOKEN</code></td><td>Token provided by BotFather; required to start the bot.</td><td>None</td></tr>
+<tr><td><code>APP_TIMEZONE</code></td><td>Timezone used for daily logs and calendar summaries.</td><td><code>America/Recife</code></td></tr>
+</tbody></table></div>
+<p>Example:</p>
+<div class="code-block"><span class="code-label">dotenv</span><pre><code>TELEGRAM_BOT_TOKEN=your_bot_token
+APP_TIMEZONE=America/Recife</code></pre></div>
+<p>On startup, the bot synchronizes its Telegram autocomplete menu. The menu lists command names; descriptions and <code>/help</code> explain their arguments and flags.</p>
+<h2 id="composer-commands">Composer commands</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Command</th><th scope="col">Purpose</th></tr></thead><tbody>
+<tr><td><code>composer bot</code></td><td>Synchronize the Telegram menu and start long polling.</td></tr>
+<tr><td><code>composer migrate</code></td><td>Apply pending migrations and seeds.</td></tr>
+<tr><td><code>composer test</code></td><td>Run all automated tests.</td></tr>
+<tr><td><code>composer start</code></td><td>Serve the optional web status page at <code>http://localhost:8000</code>.</td></tr>
+</tbody></table></div>
+<p>The web status page is separate from the Telegram bot. Stop either process with <strong>Ctrl+C</strong>.</p>
+<h2 id="reading-the-html-documentation">Reading the HTML documentation</h2>
+<p>Open <code>docs/index.html</code> directly in a browser. All pages use relative links and local styles, with no external dependencies. You can also serve the documentation separately:</p>
+<div class="code-block"><span class="code-label">bash</span><pre><code>php -S 127.0.0.1:8080 -t docs</code></pre></div>
+<p>Visit <code>http://127.0.0.1:8080</code>. The documentation server is separate from <code>composer start</code>, which serves only the web status page.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Symptom</th><th scope="col">Check</th></tr></thead><tbody>
+<tr><td>Bot asks for a token at startup</td><td>Set <code>TELEGRAM_BOT_TOKEN</code> in the root <code>.env</code> file.</td></tr>
+<tr><td>SQLite reports a missing driver</td><td>Enable PHP PDO and <code>pdo_sqlite</code> for the CLI PHP executable.</td></tr>
+<tr><td>A table or column is missing</td><td>Run <code>composer migrate</code> before restarting the bot.</td></tr>
+<tr><td>A food or group is not found</td><td>Create it first and quote names containing spaces.</td></tr>
+<tr><td>A personal command asks for registration</td><td>Send <code>/start</code> from the same Telegram account.</td></tr>
+<tr><td>New commands do not appear</td><td>Restart <code>composer bot</code> to synchronize the Telegram menu.</td></tr>
+<tr><td>Dates appear under an unexpected day</td><td>Check <code>APP_TIMEZONE</code> and restart the bot after changing <code>.env</code>.</td></tr>
+</tbody></table></div></article><nav class="pager" aria-label="Page navigation"><a href="index.html">← Overview</a><a href="commands.html">Commands →</a></nav><footer>Project documentation · Works offline · No build step</footer></main>
+  </div>
+</body>
+</html>

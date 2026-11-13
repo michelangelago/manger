@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Module boundaries, request flow, and guidance for extending the bot.">
+  <title>Development · Manger documentation</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Manger <span class="brand-detail">/ documentation</span></a><span class="header-note">PHP · Telegram · SQLite</span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav aria-label="Documentation"><p class="nav-label">Documentation</p><a href="index.html">Overview</a><a href="setup.html">Getting started</a><a href="commands.html">Commands</a><a href="database.html">Database</a><a href="development.html" aria-current="page">Development</a><a href="tests.html">Testing</a></nav><nav class="local-nav" aria-label="On this page"><p class="nav-label">On this page</p><a href="#request-lifecycle">Request lifecycle</a><a href="#adding-a-feature">Adding a feature</a><a href="#boundaries-and-current-behavior">Boundaries and current behavior</a></nav></aside>
+    <main id="content" tabindex="-1"><header class="page-header"><p class="eyebrow">Manger / Development</p><h1>How the application fits together</h1><p class="lead">Module boundaries, request flow, and guidance for extending the bot.</p></header><article aria-label="Development guide"><div class="code-block"><span class="code-label">text</span><pre><code>app/
+  bot/
+    bot.php             Polling entry point and menu synchronization
+    bootstrap.php       Configuration, database connection, and dependencies
+    commands.php        Telegram command routing
+    menu.php            Autocomplete command definitions
+    commands/           One handler per command
+    support/            Input parsing and compact view formatting
+  database/
+    connection.php      SQLite connection
+    migrate.php         Migration runner
+    migrations/         Numbered schema changes and seeds
+    repositories/       Table queries and persistence operations
+public/
+  index.php             Web environment status page
+storage/
+  database.sqlite       Local application database, ignored by Git
+tests/                  Automated tests</code></pre></div>
+<p>Add new command handlers in <code>app/bot/commands/</code>, wire them in <code>app/bot/commands.php</code>, and update <code>app/bot/menu.php</code> and <code>/help</code>. Keep queries in repositories and reusable display formatting in <code>app/bot/support/</code>.</p>
+<h2 id="request-lifecycle">Request lifecycle</h2>
+<ol>
+<li><code>app/bot/bot.php</code> loads the bootstrap module, synchronizes the menu, and starts polling.</li>
+<li><code>bootstrap.php</code> loads Composer dependencies and <code>.env</code>, creates the Nutgram client, connects SQLite, and constructs repositories.</li>
+<li><code>commands.php</code> registers handlers and injects repositories, timezone, and clock dependencies.</li>
+<li>Handlers parse input, identify the sender when personal data is involved, and call repositories.</li>
+<li>View helpers format results before the bot sends a Telegram reply.</li>
+</ol>
+<h2 id="adding-a-feature">Adding a feature</h2>
+<ol>
+<li>Add a numbered migration if the schema must change. Keep applied migrations intact.</li>
+<li>Add persistence methods to the appropriate repository; use parameterized queries and scope personal records by user.</li>
+<li>Add a command handler and register its bare and argument forms in <code>app/bot/commands.php</code>.</li>
+<li>Keep reusable parsing and presentation logic in <code>app/bot/support/</code>.</li>
+<li>Update <code>/help</code>, autocomplete definitions in <code>app/bot/menu.php</code>, and the documentation.</li>
+<li>Add tests and run <code>composer test</code> before starting the bot again.</li>
+</ol>
+<h2 id="boundaries-and-current-behavior">Boundaries and current behavior</h2>
+<p>The catalog is shared between users. Personal logs, consumption, and goals use the sender&#x27;s Telegram ID to find their application user. Commands that access personal records require <code>/start</code> registration.</p>
+<p><code>EatCommand</code> delegates to <code>DailyFoodCommand</code> so the shortcut shares consumption validation and persistence. Daily log creation and the consumption insert are atomic.</p>
+<p>Daily summaries calculate calories from the current food catalog values. Editing a food&#x27;s energy can therefore change totals for earlier consumption. Goal settings have no historical versions and are compared only against today&#x27;s daily view.</p>
+<p>The <code>public/index.php</code> endpoint is a plain environment status page. It does not serve the bot or this documentation. Open the HTML documentation directly, or serve <code>docs/</code> separately.</p></article><nav class="pager" aria-label="Page navigation"><a href="database.html">← Database</a><a href="tests.html">Testing →</a></nav><footer>Project documentation · Works offline · No build step</footer></main>
+  </div>
+</body>
+</html>
