@@ -1,95 +1,120 @@
-# manger
+# Manger
 
-Manger is a Telegram bot for tracking food consumption and calories. Users can
-manage a shared catalog of foods and food groups, log portions in grams, and
-view calorie summaries by day, week, month, or year. Food energy is recorded as
-calories per 100 grams, and each user's consumption is organized into daily logs
-created automatically when they record their first food of the day.
+A Telegram bot for tracking food consumption, calories, and daily calorie goals.
+Manage a shared food catalog, log portions in grams, and view compact summaries
+for a day, week, month, or year.
 
-Built with PHP, Nutgram, and SQLite, the bot runs through long polling and
-includes database migrations and automated tests.
+Built with **PHP, Nutgram, and SQLite**. The bot uses long polling, so it does
+not need a public URL or web server.
 
-Requires PHP 8.2 or newer and Composer.
+## Contents
 
-## Tests
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Using the bot](#using-the-bot)
+- [Command reference](#command-reference)
+- [Tests](#tests)
+- [Project structure](#project-structure)
+- [Database and repositories](#database-and-repositories)
+- [Composer commands](#composer-commands)
 
-Run all tests from the terminal:
+## Quick start
 
-```bash
-composer test
-```
+### Requirements
 
-Results are grouped by file, with `[OK]` or `[FAIL]` for each named case,
-failure details, and a final summary of totals and duration. The command exits
-with a non-zero status when any test fails, so it can also be used in CI.
+- PHP 8.2 or newer, with PDO and `pdo_sqlite` enabled.
+- Composer.
+- A Telegram bot token from BotFather.
 
-- `tests/Bot/`: command integration tests with simulated Telegram updates.
-- `tests/Database/`: migration, seed, and repository tests.
-- `tests/Support/TestContext.php`: shared setup and assertions.
-- `tests/bootstrap.php`: test dependencies.
-- `tests/run.php`: discovers and runs `*Test.php` files recursively.
-
-Every case gets a fresh in-memory SQLite database and fake Telegram client;
-tests do not access the application database or send real Telegram messages.
-To add tests, return an array of named callables from a `*Test.php` file. Each
-callable receives a `Tests\Support\TestContext` instance.
-
-## Running the application
+### Install and run
 
 ```bash
 composer install
-composer start
-```
-
-Open http://localhost:8000. Stop the development server with Ctrl+C.
-
-## Telegram bot
-
-The bot entry point is `app/bot/bot.php`. Its configuration is loaded from the root `.env` file.
-
-Install dependencies with `composer install`, then copy `.env.example` to `.env`:
-
-```bash
 cp .env.example .env
 ```
 
-Set `TELEGRAM_BOT_TOKEN` in `.env` to the token provided by Telegram's BotFather.
-
-Start the bot in a terminal:
+Set `TELEGRAM_BOT_TOKEN` in `.env`, then run:
 
 ```bash
 composer migrate
 composer bot
 ```
 
-The bot uses long polling, so no web server or public URL is required.
-On startup, `app/bot/menu.php` synchronizes Telegram's command menu. Type `/`
-in the chat to see available commands. Operation flags appear in descriptions;
-Telegram autocomplete lists command names, while `/help` shows full syntax.
-Send `/start` to your bot in Telegram. Stop it with Ctrl+C.
+In Telegram, send `/start` to register. Type `/` to open the command menu or
+send `/help` for the full syntax. Stop the bot with **Ctrl+C**.
 
-`/start` saves the sender's Telegram ID and full name (first name and optional
-last name) in `users` before confirming registration. Sending it again updates
-the name without creating a duplicate user.
+Migrations create the database and seed six food groups: **fruits, vegetables,
+grains, protein, dairy, and fats**.
 
-Bot modules:
+## Configuration
 
-- `app/bot/bot.php` starts polling.
-- `app/bot/bootstrap.php` loads configuration, connects the database, and wires dependencies.
-- `app/bot/commands.php` maps Telegram commands to their handlers.
-- `app/bot/commands/StartCommand.php` registers users and displays their saved information.
-- `app/bot/commands/HelpCommand.php` lists commands through `/help`.
+The bot loads configuration from the root `.env` file.
 
-To add a command, create a handler in `app/bot/commands/` and register it in
-`app/bot/commands.php`. Database queries stay in the repositories.
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `TELEGRAM_BOT_TOKEN` | Token provided by BotFather; required to start the bot. | None |
+| `APP_TIMEZONE` | Timezone used for daily logs and calendar summaries. | `America/Recife` |
 
-### Food group commands
+Example:
 
-Operation flags: `-I` (Index), `-C` (Create), `-R` (Read), `-U` (Update),
-and `-D` (Delete). Flags ignore letter case. `/daily` supports only `-I` and `-R`.
+```dotenv
+TELEGRAM_BOT_TOKEN=your_bot_token
+APP_TIMEZONE=America/Recife
+```
 
-Run `composer migrate` to add the default groups: fruits, vegetables, grains,
-protein, dairy, and fats. Existing groups with matching names are preserved.
+On startup, the bot synchronizes its Telegram autocomplete menu. The menu lists
+command names; descriptions and `/help` explain their arguments and flags.
+
+## Using the bot
+
+A typical workflow:
+
+```text
+/start
+/food -C "Green apple" 52 fruits
+/eat "Green apple" 150
+/goal -C 2000
+/dview
+```
+
+- Food calories are entered **per 100 grams**. Consumed portions are positive
+  whole grams; calories are calculated as `energy × grams / 100`.
+- Food and group names ignore letter case. Quote names containing spaces.
+- Foods and groups form a **shared catalog**. Daily logs, consumption entries,
+  and calorie goals belong to individual users.
+- The first consumed-food entry creates that user's daily log for today.
+  Further entries reuse it. Days without consumption do not create logs.
+- Editing a consumption entry keeps its original date and time. Deleting all
+  entries keeps the daily log available for reuse that day.
+- Creating catalog foods with `/food -C` does not create daily logs.
+
+## Command reference
+
+### Operation flags
+
+Flags ignore letter case. Commands support only the operations listed below.
+
+| Flag | Operation |
+| --- | --- |
+| `-I` | Index / list |
+| `-C` | Create |
+| `-R` | Read |
+| `-U` | Update |
+| `-D` | Delete |
+
+`/dview` has its own period flags: its `-D` means **day**.
+
+### Registration and help
+
+| Command | Result |
+| --- | --- |
+| `/start` | Registers your Telegram ID and full name, then shows your saved details. |
+| `/help` | Lists available commands and their syntax. |
+
+Sending `/start` again welcomes you back and updates your name without creating
+a duplicate user.
+
+### Food groups — `/fgroup`
 
 ```text
 /fgroup -I
@@ -99,17 +124,10 @@ protein, dairy, and fats. Existing groups with matching names are preserved.
 /fgroup -D "Cereal grains"
 ```
 
-Operations and name lookups ignore letter case. Quote names containing spaces.
-Send `/fgroup` for usage instructions. Duplicate names are rejected by the
-command, and groups referenced by foods cannot be deleted. Food groups are shared
-across bot users. `FoodGroupRepository::findByName()` returns the matching row or
-`null`.
+Index also shows the available operations. Duplicate names are rejected. Groups
+referenced by foods cannot be deleted.
 
-`/fgroup -I` also displays the available operations. `/help` lists all bot
-commands. Run `composer test` to test the commands using simulated
-Telegram messages and an in-memory database.
-
-### Food commands
+### Food catalog — `/food`
 
 ```text
 /food -I
@@ -119,28 +137,28 @@ Telegram messages and an in-memory database.
 /food -D "Apple yogurt"
 ```
 
-Use `/food -C {name} {calories} {group name}` to register a food. Calories are
-specified per 100 grams (kcal/100 g) and map to
-the `energy` column and must be a non-negative integer. Quote names containing
-spaces. The group must already exist; the command resolves its name using
-`FoodGroupRepository::findByName()` and stores its ID in `foods.food_group_id`.
-Food and group names are matched without regard to letter case. Update takes
-the existing food name, new name, calories, and group name. Duplicate food names
-are rejected, and foods referenced by daily entries cannot be deleted.
-Index lists foods and available operations. The reply shows the food
-ID, name, calories, and group name. Send `/food` for usage instructions.
+Create takes a name, **calories per 100 g**, and an existing group name. Calories
+must be a non-negative integer. The bot resolves the group's name to its database
+ID internally.
 
-`app/bot/commands/FoodCommand.php` handles food operations. The test suite
-above covers CRUD, group resolution, duplicate names, referenced foods, and invalid input.
+Update takes the existing food name followed by the new name, calories, and
+group name. Duplicate food names are rejected. Foods referenced by consumption
+entries cannot be deleted. Index also shows the available operations.
 
-### Daily logs and consumed foods
+### Log consumption — `/eat` and `/dfoods`
 
-Register with `/start`, then log consumption using an existing food name:
+Quick logging:
 
 ```text
-/daily -I
-/daily -R
-/daily -R 2026-11-13
+/eat "Green apple" 150
+```
+
+This is a shortcut for `/dfoods -C "Green apple" 150` and uses the same validation
+and automatic daily log creation.
+
+Full operations:
+
+```text
 /dfoods -I
 /dfoods -C "Green apple" 150
 /dfoods -R 1
@@ -148,27 +166,22 @@ Register with `/start`, then log consumption using an existing food name:
 /dfoods -D 1
 ```
 
-Quantities are positive whole grams. Food names ignore letter case. Entry IDs
-identify individual consumption records, so the same food can be logged more
-than once. `/daily -R` shows the entries and total calories for the requested
-date, calculated as `food energy * quantity / 100`. Omit the date with
-`/daily -R` to view today in the configured timezone.
+Register with `/start` first. Food names must exist in the catalog, and quantities
+must be positive whole grams. Read, Update, and Delete use the **entry ID** shown
+in the reply, because the same food can be logged more than once.
 
-Creating a consumed-food entry automatically creates the user's daily log for
-today if needed. A database unique index on `(user_id, date)` prevents multiple
-logs for the same day and user. Both inserts run in one transaction; a failed
-entry does not leave an empty new daily log. No log is created on days without
-consumption. Updates keep the entry's original date and time, and deleting all
-entries preserves the daily row for reuse that day. Catalog operations through
-`/food` do not create daily logs.
+### Daily logs — `/daily`
 
-Each user can access only their own daily logs and entries. Set
-`APP_TIMEZONE=America/Recife` in `.env` to control the calendar day; this is also
-the default. Timestamps include the timezone offset. Run `composer migrate`
-before restarting the bot. Existing undated logs are preserved as legacy rows;
-new logs have a `date` in `YYYY-MM-DD` format.
+```text
+/daily -I
+/daily -R
+/daily -R 2026-11-13
+```
 
-### Compact calorie summaries
+Only Index and Read are available. Read shows the day's food entries and total
+calories. Omit the date to use today in `APP_TIMEZONE`.
+
+### Calorie summaries — `/dview`
 
 ```text
 /dview
@@ -179,93 +192,169 @@ new logs have a `date` in `YYYY-MM-DD` format.
 /dview -Y
 ```
 
-`/dview` defaults to today in `APP_TIMEZONE`. Choose `-D` for a day, `-W` for
-the Monday–Sunday calendar week, `-M` for a calendar month, or `-Y` for a calendar
-year. An optional `YYYY-MM-DD` date selects the period containing that date;
-the flag and date can appear in either order.
+| Flag | Period containing the selected date |
+| --- | --- |
+| `-D` | Day; the default. |
+| `-W` | Calendar week, Monday through Sunday. |
+| `-M` | Calendar month. |
+| `-Y` | Calendar year. |
 
-The summary shows total calories first, then food names with combined grams
-and calories. Repeated foods are merged. It omits entry IDs, timestamps, and
-other record details. Up to 15 foods are shown, ordered by calories; additional
-foods are counted in a footer and included in the total. Empty periods show
-zero calories. Each user sees only their own consumption.
+The date defaults to today in `APP_TIMEZONE`. A date and flag can appear in
+either order.
 
-## Database
+Summaries show total calories first, then combined grams and calories per food.
+Repeated foods are merged. Up to 15 foods are shown, ordered by calories; the
+footer counts additional foods, which are still included in the total. Empty
+periods show zero calories.
 
-Requires the PHP PDO and `pdo_sqlite` extensions. Load the SQLite connection
-from application code (for example, from `app/bot/bot.php`):
+### Browse foods by group — `/gview`
 
-```php
-$pdo = require dirname(__DIR__) . '/database/connection.php';
+```text
+/gview
+/gview "fruits"
 ```
 
-The connection creates `storage/database.sqlite` automatically. Database files
-are ignored by Git. PDO throws exceptions on database errors and returns rows
-as associative arrays. Foreign key enforcement is enabled.
+View the entire catalog or one group. Foods appear alphabetically under their
+group, with a compact name and calorie value beneath a `kcal/100 g` heading.
+Empty groups are marked as empty. Large catalogs are split into short messages,
+and long names are shortened for display.
 
-### Users table
+### Daily calorie goals — `/goal`
 
-Run `composer migrate` to create the `users` table. The runner records completed
-migrations, so running it again skips them. Each migration runs in a transaction.
-Add future schema changes as new numbered files in `app/database/migrations/`.
-
-`app/database/repositories/UserRepository.php` handles user queries separately
-from the migration that defines the table. For example, inside `app/bot/bot.php`:
-
-```php
-require_once dirname(__DIR__) . '/database/repositories/UserRepository.php';
-$pdo = require dirname(__DIR__) . '/database/connection.php';
-$users = new \App\Database\Repositories\UserRepository($pdo);
-
-$users->save(123456789, 'Maria');
-$user = $users->findByTelegramId(123456789);
+```text
+/goal -C 2000
+/goal -R
+/goal -U 1800
+/goal -D
 ```
 
-`save()` inserts a user or updates their name when the Telegram ID already exists.
-`findByTelegramId()` returns an associative array, or `null` when no user matches.
-The sample uses a placeholder Telegram ID; use the actual sender's ID in bot handlers.
+Register with `/start` first. Each user has one goal, expressed as a positive
+whole number in **kcal/day**. Create refuses to overwrite an existing goal;
+use Update to change it.
 
-### Food tracking tables
+Today's `/dview` shows the goal and remaining calories, or calories over the
+goal. Goals are current settings without historical versions, so this comparison
+is omitted for past dates and weekly, monthly, and yearly summaries. Deleting
+a goal does not remove food entries.
 
-Run `composer migrate` to apply the additional schema:
+## Tests
 
-- `food_groups`: `id`, `name`.
-- `foods`: `id`, `name`, `energy`, `food_group_id`.
-- `daily`: `id`, `name`, `user_id`, `date` (unique per user for dated logs).
-- `daily_foods`: `id`, `diet_id`, `food_id`, `quantity`, `consumed_at`.
-
-`daily_foods.diet_id` references `daily.id`. `quantity` is measured in grams;
-store `consumed_at` as a date and time string such as `2026-11-11 12:30:00`.
-Foreign keys prevent references to missing records and deletion of referenced
-records. SQLite uses `TEXT` for the diagram's `TEXT(65535)` columns.
-
-### Repository operations
-
-Each table has a repository in `app/database/repositories/`: `UserRepository`,
-`FoodGroupRepository`, `FoodRepository`, `DailyRepository`, and `DailyFoodRepository`.
-They share the following operations through `Repository`:
-
-- `index(): array` lists all rows ordered by ID.
-- `create(array $data): int` inserts a row and returns its ID.
-- `read(int $id): ?array` returns a row, or `null` if missing.
-- `update(int $id, array $data): bool` updates the supplied fields and returns false if missing.
-- `delete(int $id): bool` deletes a row and returns false if missing.
-
-For example, from `app/bot/bot.php`:
-
-```php
-require_once dirname(__DIR__) . '/database/repositories/FoodGroupRepository.php';
-$pdo = require dirname(__DIR__) . '/database/connection.php';
-$groups = new \App\Database\Repositories\FoodGroupRepository($pdo);
-
-$id = $groups->create(['name' => 'Fruit']);
-$all = $groups->index();
-$group = $groups->read($id);
-$groups->update($id, ['name' => 'Fresh fruit']);
-$groups->delete($id);
+```bash
+composer test
 ```
 
-Pass column names as array keys. Empty arrays and unknown or read-only columns
-are rejected; database constraint failures throw PDO exceptions. Delete dependent
-rows first when a foreign key prevents deletion. Existing user methods `save()`
-and `findByTelegramId()` remain available.
+The runner groups results by file, prints `[OK]` or `[FAIL]` for each named case,
+and finishes with totals and duration. Failures include details and produce a
+non-zero exit status for CI.
+
+| Location | Responsibility |
+| --- | --- |
+| `tests/Bot/` | Command integration tests using simulated Telegram updates. |
+| `tests/Database/` | Migration, seed, constraint, and repository tests. |
+| `tests/Support/TestContext.php` | Shared setup, assertions, and a fake bot client. |
+| `tests/bootstrap.php` | Loads test dependencies. |
+| `tests/run.php` | Discovers and runs `*Test.php` files recursively. |
+
+Each test gets a fresh in-memory SQLite database. Tests do not modify application
+data or send real Telegram messages.
+
+To add a test, return an array of named callables from a `*Test.php` file. Each
+callable receives a `Tests\Support\TestContext` instance:
+
+```php
+use Tests\Support\TestContext;
+
+return [
+    'Lists the default fruit group' => static function (TestContext $t): void {
+        $t->command('/fgroup -I', 'fruits');
+    },
+];
+```
+
+## Project structure
+
+```text
+app/
+  bot/
+    bot.php             Polling entry point and menu synchronization
+    bootstrap.php       Configuration, database connection, and dependencies
+    commands.php        Telegram command routing
+    menu.php            Autocomplete command definitions
+    commands/           One handler per command
+    support/            Input parsing and compact view formatting
+  database/
+    connection.php      SQLite connection
+    migrate.php         Migration runner
+    migrations/         Numbered schema changes and seeds
+    repositories/       Table queries and persistence operations
+public/
+  index.php             Web environment status page
+storage/
+  database.sqlite       Local application database, ignored by Git
+tests/                  Automated tests
+```
+
+Add new command handlers in `app/bot/commands/`, wire them in
+`app/bot/commands.php`, and update `app/bot/menu.php` and `/help`. Keep queries
+in repositories and reusable display formatting in `app/bot/support/`.
+
+## Database and repositories
+
+SQLite is stored at `storage/database.sqlite` and created automatically by the
+connection. Foreign keys are enabled, errors throw PDO exceptions, and query
+results use associative arrays.
+
+### Migrations and tables
+
+Run `composer migrate` after adding or updating the application. Completed
+migrations are recorded and skipped on subsequent runs. Each migration runs
+in a transaction. Add schema changes as new numbered files under
+`app/database/migrations/`.
+
+| Table | Main fields and purpose |
+| --- | --- |
+| `users` | Telegram ID, name, and registration timestamp. |
+| `food_groups` | Group name. |
+| `foods` | Name, energy in kcal/100 g, and food group ID. |
+| `daily` | Name, user ID, and date; dated logs are unique per user and date. |
+| `daily_foods` | Daily log ID, food ID, quantity in grams, and consumption timestamp. |
+| `calorie_goals` | User ID and positive daily calorie target; one goal per user. |
+
+`daily_foods.diet_id` references `daily.id`. New consumption timestamps include
+the timezone offset. Existing undated daily logs are preserved as legacy rows.
+Default group seeding preserves existing groups with matching names.
+
+Daily log creation and its first consumption entry run in one transaction.
+A unique index on `(user_id, date)` prevents duplicate dated logs, and a failed
+entry does not leave a new empty log. Foreign keys prevent deleting referenced
+records.
+
+### Repository API
+
+Repositories share these methods through `Repository`:
+
+| Method | Result |
+| --- | --- |
+| `index(): array` | All rows, ordered by ID. |
+| `create(array $data): int` | Inserts a row and returns its ID. |
+| `read(int $id): ?array` | Matching row, or `null`. |
+| `update(int $id, array $data): bool` | Updates writable fields; returns false if missing. |
+| `delete(int $id): bool` | Deletes a row; returns false if missing. |
+
+Empty data and unknown or read-only columns are rejected. Constraint violations
+throw PDO exceptions. `UserRepository` also provides `save()` and
+`findByTelegramId()`; foods and groups provide `findByName()`. Daily entries,
+logs, and goals provide queries scoped to the current user. Use those scoped
+methods when handling personal data in bot commands.
+
+## Composer commands
+
+| Command | Purpose |
+| --- | --- |
+| `composer bot` | Synchronize the Telegram menu and start long polling. |
+| `composer migrate` | Apply pending migrations and seeds. |
+| `composer test` | Run all automated tests. |
+| `composer start` | Serve the optional web status page at `http://localhost:8000`. |
+
+The web status page is separate from the Telegram bot. Stop either process
+with **Ctrl+C**.

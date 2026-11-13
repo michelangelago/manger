@@ -6,10 +6,17 @@ namespace App\Bot\Support;
 
 final class DailySummaryView
 {
-    public static function render(string $period, array $foods): string
+    public static function render(string $period, array $foods, ?int $goal = null): string
     {
-        $total = self::number(array_sum(array_column($foods, 'calories')));
-        $header = "Total: {$total} kcal\n{$period}\n\n";
+        $consumed = array_sum(array_column($foods, 'calories'));
+        $total = self::number($consumed);
+        $header = "Total: {$total} kcal\n";
+        if ($goal !== null) {
+            $difference = round($goal - $consumed, 2);
+            $status = $difference >= 0 ? 'Remaining' : 'Over goal';
+            $header .= "Goal: {$goal} kcal\n{$status}: " . self::number(abs($difference)) . " kcal\n";
+        }
+        $header .= "{$period}\n\n";
         if ($foods === []) {
             return $header . 'No foods logged.';
         }

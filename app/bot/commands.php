@@ -6,6 +6,10 @@ use App\Bot\Commands\HelpCommand;
 use App\Bot\Commands\DailyCommand;
 use App\Bot\Commands\DailyFoodCommand;
 use App\Bot\Commands\DailyViewCommand;
+use App\Bot\Commands\GroupViewCommand;
+use App\Bot\Commands\GoalCommand;
+use App\Bot\Commands\EatCommand;
+use App\Database\Repositories\GoalRepository;
 use App\Database\Repositories\DailyRepository;
 use App\Database\Repositories\DailyFoodRepository;
 use App\Bot\Commands\FoodGroupCommand;
@@ -23,8 +27,11 @@ require_once __DIR__ . '/commands/FoodCommand.php';
 require_once __DIR__ . '/commands/DailyCommand.php';
 require_once __DIR__ . '/commands/DailyFoodCommand.php';
 require_once __DIR__ . '/commands/DailyViewCommand.php';
+require_once __DIR__ . '/commands/GroupViewCommand.php';
+require_once __DIR__ . '/commands/GoalCommand.php';
+require_once __DIR__ . '/commands/EatCommand.php';
 
-return static function (Nutgram $bot, UserRepository $users, FoodGroupRepository $groups, FoodRepository $foods, DailyRepository $daily, DailyFoodRepository $entries, DateTimeZone $timezone = new DateTimeZone('America/Recife'), ?Closure $clock = null): void {
+return static function (Nutgram $bot, UserRepository $users, FoodGroupRepository $groups, FoodRepository $foods, DailyRepository $daily, DailyFoodRepository $entries, GoalRepository $goals, DateTimeZone $timezone = new DateTimeZone('America/Recife'), ?Closure $clock = null): void {
     $bot->onCommand('start', new StartCommand($users));
     $bot->onCommand('help', new HelpCommand());
     $foodGroups = new FoodGroupCommand($groups);
@@ -39,7 +46,16 @@ return static function (Nutgram $bot, UserRepository $users, FoodGroupRepository
     $dailyFoodCommand = new DailyFoodCommand($users, $foods, $entries, $timezone, $clock);
     $bot->onCommand('dfoods', $dailyFoodCommand);
     $bot->onCommand('dfoods {arguments}', $dailyFoodCommand);
-    $dailyView = new DailyViewCommand($users, $entries, $timezone, $clock);
+    $eat = new EatCommand($dailyFoodCommand);
+    $bot->onCommand('eat', $eat);
+    $bot->onCommand('eat {arguments}', $eat);
+    $dailyView = new DailyViewCommand($users, $entries, $goals, $timezone, $clock);
     $bot->onCommand('dview', $dailyView);
     $bot->onCommand('dview {arguments}', $dailyView);
+    $groupView = new GroupViewCommand($groups, $foods);
+    $bot->onCommand('gview', $groupView);
+    $bot->onCommand('gview {arguments}', $groupView);
+    $goal = new GoalCommand($users, $goals);
+    $bot->onCommand('goal', $goal);
+    $bot->onCommand('goal {arguments}', $goal);
 };
