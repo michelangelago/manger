@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Manage your food catalog, log consumption, and understand your calorie totals.">
+  <title>Overview · Manger documentation</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Manger <span class="brand-detail">/ documentation</span></a><span class="header-note">PHP · Telegram · SQLite</span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav aria-label="Documentation"><p class="nav-label">Documentation</p><a href="index.html" aria-current="page">Overview</a><a href="setup.html">Getting started</a><a href="commands.html">Commands</a><a href="database.html">Database</a><a href="development.html">Development</a><a href="tests.html">Testing</a></nav><nav class="local-nav" aria-label="On this page"><p class="nav-label">On this page</p><a href="#a-typical-workflow">A typical workflow</a></nav></aside>
+    <main id="content" tabindex="-1"><header class="page-header"><p class="eyebrow">Manger / Overview</p><h1>Food tracking through Telegram</h1><p class="lead">Manage your food catalog, log consumption, and understand your calorie totals.</p></header><div class="cards"><a class="card" href="setup.html"><strong>Getting started</strong><span>Requirements, configuration, startup, and terminal commands.</span></a><a class="card" href="commands.html"><strong>Commands</strong><span>Every command, operation flag, input format, and compact view.</span></a><a class="card" href="database.html"><strong>Database</strong><span>SQLite tables, migrations, constraints, and repository operations.</span></a><a class="card" href="development.html"><strong>Development</strong><span>Module boundaries, request flow, and guidance for extending the bot.</span></a><a class="card" href="tests.html"><strong>Testing</strong><span>Isolated databases, simulated Telegram updates, and readable terminal results.</span></a></div><article aria-label="Overview guide"><p>A Telegram bot for tracking food consumption, calories, and daily calorie goals. Manage a shared food catalog, log portions in grams, and view compact summaries for a day, week, month, or year.</p>
+<p>Built with <strong>PHP, Nutgram, and SQLite</strong>. The bot uses long polling, so it does not need a public URL or web server.</p>
+<h2 id="a-typical-workflow">A typical workflow</h2>
+<p>A typical workflow:</p>
+<div class="code-block"><span class="code-label">text</span><pre><code>/start
+/food -C &quot;Green apple&quot; 52 fruits
+/eat &quot;Green apple&quot; 150
+/goal -C 2000
+/dview</code></pre></div>
+<ul>
+<li>Food calories are entered <strong>per 100 grams</strong>. Consumed portions are positive whole grams; calories are calculated as <code>energy × grams / 100</code>.</li>
+<li>Food and group names ignore letter case. Quote names containing spaces.</li>
+<li>Foods and groups form a <strong>shared catalog</strong>. Daily logs, consumption entries, and calorie goals belong to individual users.</li>
+<li>The first consumed-food entry creates that user&#x27;s daily log for today. Further entries reuse it. Days without consumption do not create logs.</li>
+<li>Editing a consumption entry keeps its original date and time. Deleting all entries keeps the daily log available for reuse that day.</li>
+<li>Creating catalog foods with <code>/food -C</code> does not create daily logs.</li>
+</ul></article><nav class="pager" aria-label="Page navigation"><a href="setup.html">Getting started →</a></nav><footer>Project documentation · Works offline · No build step</footer></main>
+  </div>
+</body>
+</html>

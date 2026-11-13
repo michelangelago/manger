@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Isolated databases, simulated Telegram updates, and readable terminal results.">
+  <title>Testing · Manger documentation</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Manger <span class="brand-detail">/ documentation</span></a><span class="header-note">PHP · Telegram · SQLite</span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav aria-label="Documentation"><p class="nav-label">Documentation</p><a href="index.html">Overview</a><a href="setup.html">Getting started</a><a href="commands.html">Commands</a><a href="database.html">Database</a><a href="development.html">Development</a><a href="tests.html" aria-current="page">Testing</a></nav><nav class="local-nav" aria-label="On this page"><p class="nav-label">On this page</p><a href="#what-the-suite-checks">What the suite checks</a><a href="#deterministic-dates">Deterministic dates</a><a href="#failures-and-ci">Failures and CI</a></nav></aside>
+    <main id="content" tabindex="-1"><header class="page-header"><p class="eyebrow">Manger / Testing</p><h1>Run and extend the test suite</h1><p class="lead">Isolated databases, simulated Telegram updates, and readable terminal results.</p></header><article aria-label="Testing guide"><div class="code-block"><span class="code-label">bash</span><pre><code>composer test</code></pre></div>
+<p>The runner groups results by file, prints <code>[OK]</code> or <code>[FAIL]</code> for each named case, and finishes with totals and duration. Failures include details and produce a non-zero exit status for CI.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Location</th><th scope="col">Responsibility</th></tr></thead><tbody>
+<tr><td><code>tests/Bot/</code></td><td>Command integration tests using simulated Telegram updates.</td></tr>
+<tr><td><code>tests/Database/</code></td><td>Migration, seed, constraint, and repository tests.</td></tr>
+<tr><td><code>tests/Support/TestContext.php</code></td><td>Shared setup, assertions, and a fake bot client.</td></tr>
+<tr><td><code>tests/bootstrap.php</code></td><td>Loads test dependencies.</td></tr>
+<tr><td><code>tests/run.php</code></td><td>Discovers and runs <code>*Test.php</code> files recursively.</td></tr>
+</tbody></table></div>
+<p>Each test gets a fresh in-memory SQLite database. Tests do not modify application data or send real Telegram messages.</p>
+<p>To add a test, return an array of named callables from a <code>*Test.php</code> file. Each callable receives a <code>Tests\Support\TestContext</code> instance:</p>
+<div class="code-block"><span class="code-label">php</span><pre><code>use Tests\Support\TestContext;
+
+return [
+    &#x27;Lists the default fruit group&#x27; =&gt; static function (TestContext $t): void {
+        $t-&gt;command(&#x27;/fgroup -I&#x27;, &#x27;fruits&#x27;);
+    },
+];</code></pre></div>
+<h2 id="what-the-suite-checks">What the suite checks</h2>
+<p>Tests cover command routing, operation flags, registration, catalog CRUD, food group lookup, consumption entry CRUD, ownership, daily uniqueness, rollback, local midnight, calendar boundaries, compact views, calorie goals, and autocomplete definitions.</p>
+<h2 id="deterministic-dates">Deterministic dates</h2>
+<p><code>TestContext</code> accepts an optional clock closure. Use a fixed <code>DateTimeImmutable</code> when testing midnight, historical dates, or period boundaries. Each test context creates its own SQLite database and bot client.</p>
+<h2 id="failures-and-ci">Failures and CI</h2>
+<p>Run <code>composer test</code> in CI after installing dependencies and enabling PDO SQLite. The runner continues after a failed case, prints the exception message and location, and exits with status 1 if any test fails or no tests are found. A successful run exits with status 0.</p></article><nav class="pager" aria-label="Page navigation"><a href="development.html">← Development</a></nav><footer>Project documentation · Works offline · No build step</footer></main>
+  </div>
+</body>
+</html>

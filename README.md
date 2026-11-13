@@ -7,6 +7,18 @@ for a day, week, month, or year.
 Built with **PHP, Nutgram, and SQLite**. The bot uses long polling, so it does
 not need a public URL or web server.
 
+## HTML documentation
+
+Open [docs/index.html](docs/index.html) for the complete documentation, including
+setup, commands, architecture, database details, and tests. The pages work offline.
+To browse them through a local server:
+
+```bash
+php -S 127.0.0.1:8080 -t docs
+```
+
+Then visit `http://127.0.0.1:8080`.
+
 ## Contents
 
 - [Quick start](#quick-start)
