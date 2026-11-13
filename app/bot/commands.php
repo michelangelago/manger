@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Bot\Commands\HelpCommand;
 use App\Bot\Commands\DailyCommand;
 use App\Bot\Commands\DailyFoodCommand;
+use App\Bot\Commands\DailyViewCommand;
 use App\Database\Repositories\DailyRepository;
 use App\Database\Repositories\DailyFoodRepository;
 use App\Bot\Commands\FoodGroupCommand;
@@ -21,6 +22,7 @@ require_once __DIR__ . '/commands/HelpCommand.php';
 require_once __DIR__ . '/commands/FoodCommand.php';
 require_once __DIR__ . '/commands/DailyCommand.php';
 require_once __DIR__ . '/commands/DailyFoodCommand.php';
+require_once __DIR__ . '/commands/DailyViewCommand.php';
 
 return static function (Nutgram $bot, UserRepository $users, FoodGroupRepository $groups, FoodRepository $foods, DailyRepository $daily, DailyFoodRepository $entries, DateTimeZone $timezone = new DateTimeZone('America/Recife'), ?Closure $clock = null): void {
     $bot->onCommand('start', new StartCommand($users));
@@ -37,4 +39,7 @@ return static function (Nutgram $bot, UserRepository $users, FoodGroupRepository
     $dailyFoodCommand = new DailyFoodCommand($users, $foods, $entries, $timezone, $clock);
     $bot->onCommand('dfoods', $dailyFoodCommand);
     $bot->onCommand('dfoods {arguments}', $dailyFoodCommand);
+    $dailyView = new DailyViewCommand($users, $entries, $timezone, $clock);
+    $bot->onCommand('dview', $dailyView);
+    $bot->onCommand('dview {arguments}', $dailyView);
 };

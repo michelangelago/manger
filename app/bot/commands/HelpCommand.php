@@ -19,6 +19,7 @@ final class HelpCommand
             . "\n\n" . FoodCommand::USAGE
             . "\n\n" . DailyCommand::USAGE
             . "\n\n" . DailyFoodCommand::USAGE
+            . "\n\n" . DailyViewCommand::USAGE
             . "\n\nQuote names containing spaces."
         );
     }

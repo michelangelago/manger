@@ -1,5 +1,14 @@
 # manger
 
+Manger is a Telegram bot for tracking food consumption and calories. Users can
+manage a shared catalog of foods and food groups, log portions in grams, and
+view calorie summaries by day, week, month, or year. Food energy is recorded as
+calories per 100 grams, and each user's consumption is organized into daily logs
+created automatically when they record their first food of the day.
+
+Built with PHP, Nutgram, and SQLite, the bot runs through long polling and
+includes database migrations and automated tests.
+
 Requires PHP 8.2 or newer and Composer.
 
 ## Tests
@@ -54,6 +63,9 @@ composer bot
 ```
 
 The bot uses long polling, so no web server or public URL is required.
+On startup, `app/bot/menu.php` synchronizes Telegram's command menu. Type `/`
+in the chat to see available commands. Operation flags appear in descriptions;
+Telegram autocomplete lists command names, while `/help` shows full syntax.
 Send `/start` to your bot in Telegram. Stop it with Ctrl+C.
 
 `/start` saves the sender's Telegram ID and full name (first name and optional
@@ -155,6 +167,28 @@ Each user can access only their own daily logs and entries. Set
 the default. Timestamps include the timezone offset. Run `composer migrate`
 before restarting the bot. Existing undated logs are preserved as legacy rows;
 new logs have a `date` in `YYYY-MM-DD` format.
+
+### Compact calorie summaries
+
+```text
+/dview
+/dview "2026-11-13"
+/dview -D 2026-11-13
+/dview -W
+/dview -M 2026-11-13
+/dview -Y
+```
+
+`/dview` defaults to today in `APP_TIMEZONE`. Choose `-D` for a day, `-W` for
+the Monday–Sunday calendar week, `-M` for a calendar month, or `-Y` for a calendar
+year. An optional `YYYY-MM-DD` date selects the period containing that date;
+the flag and date can appear in either order.
+
+The summary shows total calories first, then food names with combined grams
+and calories. Repeated foods are merged. It omits entry IDs, timestamps, and
+other record details. Up to 15 foods are shown, ordered by calories; additional
+foods are counted in a footer and included in the total. Empty periods show
+zero calories. Each user sees only their own consumption.
 
 ## Database
 

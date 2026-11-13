@@ -59,14 +59,16 @@ final class TestContext
         $this->bot->setCommonUser(\SergiX44\Nutgram\Telegram\Types\User\User::make($telegramId, false, 'Test user'));
     }
 
-    public function command(string $input, string|array $expected): void
+    public function command(string $input, string|array $expected): string
     {
         $this->bot->hearText($input)->reply();
         $history = $this->bot->getRequestHistory();
         $this->check(count($history) === 1, 'Expected one reply for: ' . $input);
-        $body = urldecode((string) $history[0]['request']->getBody());
+        $data = FakeNutgram::getActualData($history[0]['request']);
+        $body = (string) ($data['text'] ?? '');
         foreach ((array) $expected as $text) {
             $this->check(str_contains($body, $text), "Unexpected reply for {$input}; expected: {$text}; received: {$body}");
         }
+        return $body;
     }
 }

@@ -16,6 +16,19 @@ final class DailyFoodRepository extends Repository
     protected const TABLE = 'daily_foods';
     protected const COLUMNS = ['diet_id', 'food_id', 'quantity', 'consumed_at'];
 
+    public function summarizeForUser(int $userId, string $startDate, string $endDate): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT f.id AS food_id, f.name AS food_name, SUM(df.quantity) AS grams, '
+            . 'SUM(df.quantity * 1.0 * f.energy / 100) AS calories '
+            . 'FROM daily_foods df JOIN daily d ON d.id = df.diet_id JOIN foods f ON f.id = df.food_id '
+            . 'WHERE d.user_id = :user_id AND d.date >= :start_date AND d.date < :end_date '
+            . 'GROUP BY f.id, f.name ORDER BY calories DESC, f.name COLLATE NOCASE, f.id'
+        );
+        $statement->execute(['user_id' => $userId, 'start_date' => $startDate, 'end_date' => $endDate]);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function indexForUser(int $userId, ?int $dailyId = null): array
     {
         $sql = 'SELECT df.*, f.name AS food_name, f.energy, d.date AS daily_date '
