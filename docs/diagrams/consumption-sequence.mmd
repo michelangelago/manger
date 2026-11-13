@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor U as Telegram sender
+    participant C as DailyFoodCommand
+    participant R as DailyFoodRepository
+    participant D as DailyRepository
+    participant DB as SQLite
+    U->>C: /eat via shortcut or /dfoods -C
+    Note over C: Validate arguments; resolve user and food
+    C->>R: registerConsumption(user, food, grams, now)
+    R->>DB: BEGIN
+    R->>D: getOrCreateForDate(user, local date)
+    D->>DB: INSERT daily ON CONFLICT DO NOTHING
+    D->>DB: SELECT daily by user and date
+    DB-->>D: Daily row
+    D-->>R: Daily row
+    R->>DB: INSERT daily_foods
+    alt Database writes succeed
+        R->>DB: COMMIT
+        R-->>C: Entry ID
+        C->>R: readForUser(entry ID, user)
+        R-->>C: Owned entry
+        C-->>U: Saved entry details
+    else Database exception
+        R->>DB: ROLLBACK
+        R-->>C: Rethrow exception
+    end

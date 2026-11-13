@@ -60,6 +60,17 @@ td code { white-space: normal; }
 .pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; margin-top: 3rem; padding: 1.3rem 0; border-top: 1px solid var(--line); font-size: .88rem; }
 .pager a { text-decoration: none; }
 footer { color: var(--muted); font-size: .72rem; padding-top: 1rem; }
+.spec-card { padding: 1rem 0; border-bottom: 1px solid var(--line); scroll-margin-top: 2rem; }
+.spec-card h3 { margin-top: 1rem; }
+.evidence { color: var(--muted); font-size: .82rem; }
+.evidence code { font-size: .9em; }
+details { border: 1px solid var(--line); padding: .8rem 1rem; border-radius: 8px; margin: 1rem 0 2rem; }
+summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+details pre { margin-top: .8rem; background: #202e28; border-radius: 6px; }
+.diagram { margin: 1.5rem 0 2rem; padding: .7rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.diagram img { display: block; width: 100%; height: auto; }
+.diagram figcaption { margin-top: .6rem; text-align: center; font-size: .8rem; }
+@media print { .diagram { break-inside: avoid; } .spec-card { break-inside: auto; } details pre code { color: black; } }
 @media (max-width: 800px) {
   .header-note { display: none; }
   .layout { display: block; padding: 0 1.1rem; }

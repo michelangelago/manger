@@ -1,0 +1,13 @@
+flowchart LR
+    participant["Telegram participant"] --> profile["/start: register or refresh"]
+    participant --> help["/help and command discovery"]
+    participant --> catalog["/fgroup + /food: shared catalog CRUD"]
+    participant --> gview["/gview: browse groups"]
+    profile --> registered["Registered sender: users row exists"]
+    registered --> consume["/eat or /dfoods: owned consumption"]
+    registered --> daily["/daily: index/read owned logs"]
+    registered --> view["/dview: calorie summaries"]
+    registered --> goal["/goal: current daily target"]
+    operator["CLI operator"] --> migrate["composer migrate"]
+    operator --> bot["composer bot"]
+    operator --> tests["composer test"]

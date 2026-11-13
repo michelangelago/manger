@@ -1,0 +1,12 @@
+flowchart TD
+    A["/eat arguments or /dfoods -C arguments"] --> B{"Valid arguments and registered sender?"}
+    B -- No --> E["Reply without database write"]
+    B -- Yes --> C{"Food exists by name?"}
+    C -- No --> E
+    C -- Yes --> T["BEGIN transaction"]
+    T --> D["Get/create daily by user and local date"]
+    D --> F["INSERT consumed-food entry"]
+    F --> G["COMMIT"]
+    G --> H["Read owned entry and send reply"]
+    D -- Exception --> R["ROLLBACK and rethrow"]
+    F -- Exception --> R
