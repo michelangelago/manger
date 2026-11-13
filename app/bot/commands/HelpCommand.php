@@ -14,8 +14,11 @@ final class HelpCommand
             "Available commands:\n\n"
             . "/start — Register or view your saved information.\n"
             . "/help — Show available commands.\n\n"
+            . "Operations: -I Index, -C Create, -R Read, -U Update, -D Delete.\n\n"
             . FoodGroupCommand::USAGE
             . "\n\n" . FoodCommand::USAGE
+            . "\n\n" . DailyCommand::USAGE
+            . "\n\n" . DailyFoodCommand::USAGE
             . "\n\nQuote names containing spaces."
         );
     }

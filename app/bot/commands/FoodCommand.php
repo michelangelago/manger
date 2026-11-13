@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Bot\Commands;
 
+use App\Bot\Support\CommandInput;
 use App\Database\Repositories\FoodGroupRepository;
 use App\Database\Repositories\FoodRepository;
 use PDOException;
@@ -11,17 +12,18 @@ use SergiX44\Nutgram\Nutgram;
 
 require_once dirname(__DIR__, 2) . '/database/repositories/FoodRepository.php';
 require_once dirname(__DIR__, 2) . '/database/repositories/FoodGroupRepository.php';
+require_once dirname(__DIR__) . '/support/CommandInput.php';
 
 final class FoodCommand
 {
     public const USAGE = "Food commands:\n"
-        . "/food Index\n"
-        . "/food Create \"name\" calories \"group name\"\n"
-        . "/food Read \"existing name\"\n"
-        . "/food Update \"existing name\" \"new name\" calories \"group name\"\n"
-        . "/food Delete \"existing name\"\n"
+        . "/food -I\n"
+        . "/food -C \"name\" calories \"group name\"\n"
+        . "/food -R \"existing name\"\n"
+        . "/food -U \"existing name\" \"new name\" calories \"group name\"\n"
+        . "/food -D \"existing name\"\n"
         . "Enter calories per 100 grams as a non-negative integer.\n"
-        . "Quote names containing spaces. View groups with /fgroup Index.";
+        . "Quote names containing spaces. View groups with /fgroup -I.";
 
     public function __construct(private FoodRepository $foods, private FoodGroupRepository $groups)
     {
@@ -29,14 +31,14 @@ final class FoodCommand
 
     public function __invoke(Nutgram $bot, string $arguments = ''): void
     {
-        if (!preg_match('/^\s*(Index|Create|Read|Update|Delete)(?:\s+(?:"[^"]*"|[^\s"]+))*\s*$/i', $arguments)) {
+        if (!preg_match('/^\s*(-[ICRUD])(?:\s+(?:"[^"]*"|[^\s"]+))*\s*$/i', $arguments)) {
             $bot->sendMessage(self::USAGE);
             return;
         }
 
         preg_match_all('/"[^"]*"|[^\s"]+/', $arguments, $matches);
         $tokens = array_map(static fn (string $token): string => trim(trim($token, '"')), $matches[0]);
-        $operation = strtolower(array_shift($tokens));
+        $operation = CommandInput::operation(array_shift($tokens));
         $expected = ['index' => 0, 'create' => 3, 'read' => 1, 'update' => 4, 'delete' => 1];
 
         if (count($tokens) !== $expected[$operation] || in_array('', $tokens, true)) {
@@ -97,7 +99,7 @@ final class FoodCommand
 
         $group = $this->groups->findByName($groupName);
         if ($group === null) {
-            $bot->sendMessage("Group not found: {$groupName}\nView groups with /fgroup Index.");
+            $bot->sendMessage("Group not found: {$groupName}\nView groups with /fgroup -I.");
             return;
         }
 
