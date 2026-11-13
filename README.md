@@ -19,6 +19,18 @@ php -S 127.0.0.1:8080 -t docs
 
 Then visit `http://127.0.0.1:8080`.
 
+The implementation specification is organized into:
+
+- [Functional requirements and use cases](docs/requirements.html).
+- [Business rules and enforcement layers](docs/business-rules.html).
+- [Architecture, flow, sequence, runtime, and entity diagrams](docs/diagrams.html).
+- [Database dictionary, keys, indexes, and migrations](docs/data-dictionary.html).
+- [Traceability from requirements to source and tests](docs/traceability.html).
+- [Current limitations and unimplemented capabilities](docs/limitations.html).
+
+These pages describe the current source. SVG diagrams work offline and include
+editable Mermaid sources in `docs/diagrams/`.
+
 ## Contents
 
 - [Quick start](#quick-start)
@@ -254,6 +266,12 @@ a goal does not remove food entries.
 ```bash
 composer test
 ```
+
+GitHub Actions runs the same suite on every push and pull request, using PHP
+8.2 and 8.5 with SQLite support. The workflow also validates Composer and checks
+dependency requirements. No bot token or application database is needed.
+View results in the repository's **Actions** tab, or run the workflow manually
+there. Configuration: [.github/workflows/tests.yml](.github/workflows/tests.yml).
 
 The runner groups results by file, prints `[OK]` or `[FAIL]` for each named case,
 and finishes with totals and duration. Failures include details and produce a

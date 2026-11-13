@@ -1,0 +1,43 @@
+erDiagram
+    users ||--o{ daily : owns
+    users ||--o| calorie_goals : has
+    food_groups ||--o{ foods : contains
+    daily ||--o{ daily_foods : contains
+    foods ||--o{ daily_foods : referenced_by
+    users {
+        INTEGER id PK
+        INTEGER telegram_id UK
+        TEXT name
+        TEXT created_at
+    }
+    food_groups {
+        INTEGER id PK
+        TEXT name
+    }
+    foods {
+        INTEGER id PK
+        TEXT name
+        INTEGER energy
+        INTEGER food_group_id FK
+    }
+    daily {
+        INTEGER id PK
+        TEXT name
+        INTEGER user_id FK
+        TEXT date "nullable; unique with user_id"
+    }
+    daily_foods {
+        INTEGER id PK
+        INTEGER diet_id FK
+        INTEGER food_id FK
+        INTEGER quantity
+        DATETIME consumed_at
+    }
+    calorie_goals {
+        INTEGER id PK
+        INTEGER user_id FK,UK
+        INTEGER calories "CHECK integer > 0"
+    }
+    migrations {
+        TEXT name PK
+    }

@@ -1,0 +1,11 @@
+flowchart TB
+    chat["Telegram sender"] <--> api["Telegram Bot API"]
+    api <--> polling["bot.php / Nutgram long polling"]
+    polling --> bootstrap["bootstrap.php: env + PDO + timezone + repositories"]
+    bootstrap --> routes["commands.php: routing + injection"]
+    routes --> handlers["Command handlers"]
+    handlers --> helpers["Input and view helpers"]
+    handlers --> repos["PDO repositories"]
+    repos --> sqlite[("storage/database.sqlite")]
+    status["public/index.php: separate status response"]
+    docs["docs/: static HTML, separate from bot"]

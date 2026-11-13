@@ -1,0 +1,8 @@
+flowchart LR
+    operator["Operator CLI"] --> process["PHP + Nutgram polling process"]
+    process <-->|HTTPS| telegram["Telegram Bot API"]
+    process --> env["Local .env"]
+    process --> db[("Local SQLite file")]
+    migration["composer migrate"] --> db
+    docs["docs/: static HTML + SVG"]
+    status["public/: optional status server"]
